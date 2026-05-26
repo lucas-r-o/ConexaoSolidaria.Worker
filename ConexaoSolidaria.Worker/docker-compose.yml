@@ -1,0 +1,24 @@
+services:
+  rabbitmq:
+    image: masstransit/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+
+  worker:
+    image: conexaosolidariaworker:dev
+    depends_on:
+      - rabbitmq
+    environment:
+      Bus__Host: rabbitmq
+      Bus__Port: "5672"
+      Bus__User: guest
+      Bus__Password: guest
+
+volumes:
+  rabbitmqdata:
