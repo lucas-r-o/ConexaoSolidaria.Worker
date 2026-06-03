@@ -10,15 +10,5 @@ services:
     volumes:
       - rabbitmqdata:/var/lib/rabbitmq
 
-  worker:
-    image: conexaosolidariaworker:dev
-    depends_on:
-      - rabbitmq
-    environment:
-      Bus__Host: rabbitmq
-      Bus__Port: "5672"
-      Bus__User: guest
-      Bus__Password: guest
-
 volumes:
   rabbitmqdata:
