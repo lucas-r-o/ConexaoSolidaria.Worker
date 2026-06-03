@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ConexaoSolidaria.Worker.Events
+﻿namespace ConexaoSolidaria.Events
 {
-    internal class DoacaoRecebidaEvent
+    public class DoacaoRecebidaEvent
     {
+        public Guid Id { get; set; }
+        public Guid CampanhaId { get; set; } 
+        public Guid DoadorId { get; set; }
+        public decimal Valor { get; set; }
+        public DateTime DataHora { get; set; } 
+
     }
 }
