@@ -1,13 +1,26 @@
-﻿using ConexaoSolidaria.Worker.Events;
+﻿using ConexaoSolidaria.Events;
+using ConexaoSolidaria.Worker.Infrastructure.Persistence;
 using MassTransit;
 
 namespace ConexaoSolidaria.Worker.Infrastructure.Consumers
 {
-    internal class DoacaoRecebidaConsumer : IConsumer<DoacaoRecebidaEvent>
+    internal class DoacaoRecebidaConsumer(ICampanhaRepository repository) : IConsumer<DoacaoRecebidaEvent>
     {
-        public Task Consume(ConsumeContext<DoacaoRecebidaEvent> context)
+        private readonly ICampanhaRepository _repository = repository;
+
+        public async Task Consume(ConsumeContext<DoacaoRecebidaEvent> context)
         {
-            throw new NotImplementedException();
+            var campanhaId = context.Message.CampanhaId;
+
+            if (!_repository.TryGet(campanhaId, out var campanha))
+            {
+                // TODO: Validar um caminho melhor
+                throw new Exception($"Campanha {campanhaId} não encontrada");
+            }
+
+            campanha!.UpdateArrecadacao();
+
+            await _repository.UpdateAsync(campanha);
         }
     }
 }
