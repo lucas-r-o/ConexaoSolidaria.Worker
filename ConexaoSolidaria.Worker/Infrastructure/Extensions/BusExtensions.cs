@@ -1,5 +1,4 @@
-﻿using ConexaoSolidaria.Worker.Events;
-using ConexaoSolidaria.Worker.Infrastructure.Consumers;
+﻿using ConexaoSolidaria.Worker.Infrastructure.Consumers;
 using MassTransit;
 
 namespace ConexaoSolidaria.Worker.Infrastructure.Extensions
@@ -27,17 +26,19 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Extensions
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
+                    cfg.UseJsonSerializer();
+                    cfg.ConfigureJsonSerializerOptions(options =>
+                    {
+                        options.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.Strict;
+                        return options;
+                    });
+
                     cfg.Host(host, ushort.Parse(port), "/", h =>
                     {
                         h.Username(user);
                         h.Password(password);
                     });
-                    // Isso apenas se for publicar
-                    //cfg.Message<DoacaoRecebidaEvent>(m => m.SetEntityName("DoacaoRecebida"));
-                    cfg.ReceiveEndpoint("DoacaoRecebida", e =>
-                    {
-                        e.ConfigureConsumer<DoacaoRecebidaConsumer>(context);
-                    });
+                    cfg.ConfigureEndpoints(context);
                 });
             });
         }
