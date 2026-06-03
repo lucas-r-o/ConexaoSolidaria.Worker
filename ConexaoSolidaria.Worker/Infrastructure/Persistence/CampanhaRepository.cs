@@ -16,7 +16,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
         public async Task<bool> CreateAsync(Guid campanhaId, long valor)
         {
             var campanha = new ArrecadacaoCampanha() { CampanhaId = campanhaId };
-            campanha.UpdateArrecadacao();
+            campanha.UpdateArrecadacao(valor);
 
             _ = await _db.ArrecadacaoCampanha.AddAsync(campanha);
 

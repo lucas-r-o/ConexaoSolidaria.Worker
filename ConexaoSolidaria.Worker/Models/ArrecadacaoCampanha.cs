@@ -9,6 +9,6 @@
         public DateTime UpdatedAt { get; set; } = DateTime.Today;
         public bool Ativo { get; set; } = true;
 
-        public void UpdateArrecadacao() => TotalArrecadado++;
+        public void UpdateArrecadacao(decimal valor) => TotalArrecadado += valor;
     }
 }

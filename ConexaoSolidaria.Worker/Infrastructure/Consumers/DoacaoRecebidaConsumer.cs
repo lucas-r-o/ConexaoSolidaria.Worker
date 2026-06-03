@@ -18,7 +18,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Consumers
                 throw new Exception($"Campanha {campanhaId} não encontrada");
             }
 
-            campanha!.UpdateArrecadacao();
+            campanha!.UpdateArrecadacao(context.Message.Valor);
 
             await _repository.UpdateAsync(campanha);
         }
