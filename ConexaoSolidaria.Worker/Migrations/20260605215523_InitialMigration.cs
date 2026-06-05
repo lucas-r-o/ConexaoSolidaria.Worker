@@ -18,9 +18,10 @@ namespace ConexaoSolidaria.Worker.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CampanhaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TotalArrecadado = table.Column<decimal>(type: "numeric", nullable: false),
+                    MetaFinanceira = table.Column<decimal>(type: "numeric", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Ativo = table.Column<bool>(type: "boolean", nullable: false)
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
