@@ -8,6 +8,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
         bool TryGet(Guid campanhaId, out ArrecadacaoCampanha? campanha);
         Task<bool> CreateAsync(DoacaoRecebidaEvent doacao);
         Task UpdateAsync(ArrecadacaoCampanha campanha);
+        Task UpdateRangeAsync(IEnumerable<ArrecadacaoCampanha> campanhas);
         Task<IEnumerable<ArrecadacaoCampanha>> GetAllCampanhas(bool apenasAtivos = false);
     }
 }

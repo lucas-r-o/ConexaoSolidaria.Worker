@@ -32,6 +32,12 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
             await _db.SaveChangesAsync();
         }
 
+        public async Task UpdateRangeAsync(IEnumerable<ArrecadacaoCampanha> campanhas)
+        {
+            _db.UpdateRange(campanhas);
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<IEnumerable<ArrecadacaoCampanha>> GetAllCampanhas(bool apenasAtivos = false)
         {
             var campanhas = _db.ArrecadacaoCampanha.AsQueryable();
