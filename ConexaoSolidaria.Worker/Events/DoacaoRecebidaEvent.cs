@@ -6,6 +6,7 @@
         public Guid CampanhaId { get; set; } 
         public Guid DoadorId { get; set; }
         public decimal Valor { get; set; }
+        public decimal MetaFinanceira { get; set; }
         public DateTime DataHora { get; set; } 
 
     }
