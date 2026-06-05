@@ -4,10 +4,9 @@ using MassTransit;
 
 namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
 {
-    //public class AtualizarArregadacaoJobs(IPublishEndpoint publish, ICampanhaRepository repository) : BackgroundService
     public class AtualizarArregadacaoJobs(IServiceScopeFactory scopeFactory) : BackgroundService
     {
-
+        // TODO: Melhorar job para enviar atualização apenas quando tiver alteração de valor
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -21,14 +20,18 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
 
                 var campanhas = await repository.GetAllCampanhas(true);
 
-                if (campanhas == null || !campanhas.Any()) continue; // ← era return, causaria bug
+                if (campanhas == null || !campanhas.Any()) continue;
 
-                var tasks = campanhas
-                    .Select(c => publish.Publish(
-                        new ArrecadacaoAtualizadaEvent(c.CampanhaId, c.TotalArrecadado, DateTime.Now),
-                        stoppingToken));
+                var conquistadas = campanhas.Where(c => c.MetaConquistada);
 
-                await Task.WhenAll(tasks);
+                foreach(var campanha in conquistadas)
+                    campanha.Finish();
+
+                await repository.UpdateRangeAsync(campanhas);
+
+                var events = campanhas.Select(c => new ArrecadacaoAtualizadaEvent(c.CampanhaId, c.TotalArrecadado, DateTimeOffset.UtcNow));
+
+                await Task.WhenAll(events.Select(e => publish.Publish(e, stoppingToken)));
             }
         }
     }
