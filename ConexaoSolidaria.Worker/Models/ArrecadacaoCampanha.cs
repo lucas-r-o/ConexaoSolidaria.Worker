@@ -5,10 +5,14 @@
         public Guid Id { get; set; }
         public Guid CampanhaId { get; set; }
         public decimal TotalArrecadado { get; private set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Today;
-        public DateTime UpdatedAt { get; set; } = DateTime.Today;
-        public bool Ativo { get; set; } = true;
+        public decimal MetaFinanceira { get; set; }
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public Status Status { get; set; } = Status.Ativo;
+        public bool Ativo => Status == Status.Ativo;
+        public bool MetaConquistada => MetaFinanceira >= TotalArrecadado;
 
         public void UpdateArrecadacao(decimal valor) => TotalArrecadado += valor;
+        public void Finish() => Status = Status.Concluido;
     }
 }
