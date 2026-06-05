@@ -10,17 +10,16 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Consumers
 
         public async Task Consume(ConsumeContext<DoacaoRecebidaEvent> context)
         {
-            var campanhaId = context.Message.CampanhaId;
+            var message = context.Message;
 
-            if (!_repository.TryGet(campanhaId, out var campanha))
+            // TODO: pensar melhor a estrutura de criação das campanhas caso não exista
+            if (!_repository.TryGet(message.CampanhaId, out var campanha))
+                _ = await _repository.CreateAsync(message);
+            else
             {
-                // TODO: Validar um caminho melhor
-                throw new Exception($"Campanha {campanhaId} não encontrada");
+                campanha!.UpdateArrecadacao(message.Valor);
+                await _repository.UpdateAsync(campanha);
             }
-
-            campanha!.UpdateArrecadacao(context.Message.Valor);
-
-            await _repository.UpdateAsync(campanha);
         }
     }
 }

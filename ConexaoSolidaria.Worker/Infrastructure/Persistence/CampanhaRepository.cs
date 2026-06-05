@@ -1,4 +1,5 @@
-﻿using ConexaoSolidaria.Worker.Models;
+﻿using ConexaoSolidaria.Events;
+using ConexaoSolidaria.Worker.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
@@ -8,18 +9,18 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
         private readonly WorkerDbContext _db = db;
         public bool TryGet(Guid campanhaId, out ArrecadacaoCampanha? campanha)
         {
-            campanha = _db.ArrecadacaoCampanha.FirstOrDefault(p => p.CampanhaId == campanhaId);
+            campanha = _db.ArrecadacaoCampanha.Where(p => p.Status == Status.Ativo).FirstOrDefault(p => p.CampanhaId == campanhaId);
 
             return campanha != null;
         }
 
-        public async Task<bool> CreateAsync(Guid campanhaId, long valor)
+        public async Task<bool> CreateAsync(DoacaoRecebidaEvent doacao)
         {
-            var campanha = new ArrecadacaoCampanha() { CampanhaId = campanhaId };
-            campanha.UpdateArrecadacao(valor);
+            var campanha = new ArrecadacaoCampanha() { CampanhaId = doacao.CampanhaId, MetaFinanceira = doacao.MetaFinanceira };
+
+            campanha!.UpdateArrecadacao(doacao.Valor);
 
             _ = await _db.ArrecadacaoCampanha.AddAsync(campanha);
-
             var result = await _db.SaveChangesAsync();
 
             return result > 0;
@@ -36,7 +37,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
             var campanhas = _db.ArrecadacaoCampanha.AsQueryable();
 
             if (apenasAtivos)
-                campanhas = campanhas.Where(p => p.Ativo);
+                campanhas = campanhas.Where(p => p.Status == Status.Ativo);
 
             return await campanhas.ToListAsync();
         }
