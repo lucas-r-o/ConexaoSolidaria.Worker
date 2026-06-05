@@ -10,7 +10,7 @@
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public Status Status { get; set; } = Status.Ativo;
         public bool Ativo => Status == Status.Ativo;
-        public bool MetaConquistada => MetaFinanceira >= TotalArrecadado;
+        public bool MetaConquistada => TotalArrecadado >= MetaFinanceira;
 
         public void UpdateArrecadacao(decimal valor) => TotalArrecadado += valor;
         public void Finish() => Status = Status.Concluido;
