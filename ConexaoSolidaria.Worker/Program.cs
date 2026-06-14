@@ -9,4 +9,6 @@ builder.Services.AddBus(builder.Configuration);
 builder.Services.AddJobs();
 
 var host = builder.Build();
+host.AddMetrics();
+
 host.Run();
