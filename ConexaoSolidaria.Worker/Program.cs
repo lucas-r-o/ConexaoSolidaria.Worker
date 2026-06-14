@@ -1,7 +1,7 @@
 using ConexaoSolidaria.Worker.Infrastructure.Extensions;
 using ConexaoSolidaria.Worker.Infrastructure.Jobs;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataBaseContext(builder.Configuration);
 builder.Services.AddRepository();
