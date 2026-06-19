@@ -20,7 +20,12 @@ spec:
           image: conexao-solidaria-worker:latest
           imagePullPolicy: Never
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: conexao-solidaria-worker-config
+            - secretRef:
+                name: conexao-solidaria-worker-secrets
           resources:
             requests:
               memory: "1Gi"
