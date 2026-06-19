@@ -4,7 +4,6 @@ metadata:
   name: conexao-solidaria-worker-config
   namespace: apps
 data:
-  Bus__Host: "localhost"
+  Bus__Host: "rabbit-service"
   Bus__Port: "5672"
   Bus__User: "guest"
-  Bus__Password: "guest"
