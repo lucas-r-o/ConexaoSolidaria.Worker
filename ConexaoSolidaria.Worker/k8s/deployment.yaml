@@ -21,6 +21,8 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
+            - name: metrics
+              containerPort: 9102
           envFrom:
             - configMapRef:
                 name: conexao-solidaria-worker-config
