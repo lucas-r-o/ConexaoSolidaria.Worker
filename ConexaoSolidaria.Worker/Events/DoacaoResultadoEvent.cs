@@ -1,6 +1,6 @@
 ﻿namespace ConexaoSolidaria.Events
 {
-    public class DoacaoRecusadaEvent
+    public class DoacaoResultadoEvent
     {
         public Guid CampanhaId { get; init; }
         public Guid DoadorId { get; init; }
