@@ -31,7 +31,7 @@ namespace ConexaoSolidaria.Worker.Migrations
                     b.Property<Guid>("CampanhaId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("MetaFinanceira")
@@ -43,7 +43,10 @@ namespace ConexaoSolidaria.Worker.Migrations
                     b.Property<decimal>("TotalArrecadado")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<decimal>("UltimoTotalPublicado")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");

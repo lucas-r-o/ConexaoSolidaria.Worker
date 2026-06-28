@@ -9,7 +9,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
         private readonly WorkerDbContext _db = db;
         public bool TryGet(Guid campanhaId, out ArrecadacaoCampanha? campanha)
         {
-            campanha = _db.ArrecadacaoCampanha.Where(p => p.Status == Status.Ativo).FirstOrDefault(p => p.CampanhaId == campanhaId);
+            campanha = _db.ArrecadacaoCampanha.FirstOrDefault(p => p.CampanhaId == campanhaId);
 
             return campanha != null;
         }

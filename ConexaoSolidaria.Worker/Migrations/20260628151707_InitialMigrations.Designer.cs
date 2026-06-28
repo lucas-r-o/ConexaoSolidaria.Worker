@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ConexaoSolidaria.Worker.Migrations
 {
     [DbContext(typeof(WorkerDbContext))]
-    [Migration("20260605215523_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260628151707_InitialMigrations")]
+    partial class InitialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,7 +34,7 @@ namespace ConexaoSolidaria.Worker.Migrations
                     b.Property<Guid>("CampanhaId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("MetaFinanceira")
@@ -46,7 +46,10 @@ namespace ConexaoSolidaria.Worker.Migrations
                     b.Property<decimal>("TotalArrecadado")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<decimal>("UltimoTotalPublicado")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");

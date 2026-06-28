@@ -24,10 +24,17 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
 
                 var conquistadas = campanhas.Where(c => c.MetaConquistada);
 
-                foreach(var campanha in conquistadas)
+                foreach (var campanha in conquistadas)
                     campanha.Finish();
 
-                await repository.UpdateRangeAsync(campanhas);
+                var alteradas = campanhas.Where(c => c.HouveMudanca);
+
+                if (!alteradas.Any()) continue;
+
+                foreach (var campanha in alteradas)
+                    campanha.UpdateUltimoTotal();
+
+                await repository.UpdateRangeAsync(campanhas, cancelattionToken);
 
                 var events = campanhas.Select(c => new ArrecadacaoAtualizadaEvent(c.CampanhaId, c.TotalArrecadado, DateTimeOffset.UtcNow));
 
