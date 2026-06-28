@@ -6,12 +6,11 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
 {
     public class AtualizarArregadacaoJobs(IServiceScopeFactory scopeFactory) : BackgroundService
     {
-        // TODO: Melhorar job para enviar atualização apenas quando tiver alteração de valor
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancelattionToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancelattionToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), cancelattionToken);
 
                 await using var scope = scopeFactory.CreateAsyncScope();
 
@@ -38,7 +37,7 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
 
                 var events = campanhas.Select(c => new ArrecadacaoAtualizadaEvent(c.CampanhaId, c.TotalArrecadado, DateTimeOffset.UtcNow));
 
-                await Task.WhenAll(events.Select(e => publish.Publish(e, stoppingToken)));
+                await Task.WhenAll(events.Select(e => publish.Publish(e, cancelattionToken)));
             }
         }
     }

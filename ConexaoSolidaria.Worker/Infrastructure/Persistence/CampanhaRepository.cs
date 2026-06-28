@@ -25,17 +25,17 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Persistence
 
             return result > 0;
         }
-        public async Task UpdateAsync(ArrecadacaoCampanha campanha)
+        public async Task UpdateAsync(ArrecadacaoCampanha campanha, CancellationToken cancellationToken)
         {
             _ = _db.Update(campanha);
 
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task UpdateRangeAsync(IEnumerable<ArrecadacaoCampanha> campanhas)
+        public async Task UpdateRangeAsync(IEnumerable<ArrecadacaoCampanha> campanhas, CancellationToken cancellationToken)
         {
             _db.UpdateRange(campanhas);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<ArrecadacaoCampanha>> GetAllCampanhas(bool apenasAtivos = false)
