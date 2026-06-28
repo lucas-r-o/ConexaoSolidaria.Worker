@@ -18,21 +18,23 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Consumers
                 _ = await _repository.CreateAsync(message);
             else
             {
+                var resultMessage = "Doação realizada";
+
                 if (!campanha!.Ativo)
-                {
-                    await _publish.Publish(new DoacaoRecusadaEvent
-                    {
-                        CampanhaId = campanha.CampanhaId,
-                        DoadorId = message.DoadorId,
-                        Motivo = "Campanha inativa",
-                        OcorridoEm = DateTimeOffset.UtcNow
-                    }, context.CancellationToken);
-                }
+                    resultMessage = "Doação não realizada, campanha inativa";
                 else
                 {
                     campanha!.UpdateArrecadacao(message.Valor);
                     await _repository.UpdateAsync(campanha, context.CancellationToken);
                 }
+
+                await _publish.Publish(new DoacaoResultadoEvent
+                {
+                    CampanhaId = campanha.CampanhaId,
+                    DoadorId = message.DoadorId,
+                    Motivo = resultMessage,
+                    OcorridoEm = DateTimeOffset.UtcNow
+                }, context.CancellationToken);
             }
         }
     }
