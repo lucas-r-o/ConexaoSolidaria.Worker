@@ -6,7 +6,6 @@ on:
 
 env:
    SOLUTION_PATH: ConexaoSolidaria.Worker.sln
-   SRC_PATH: Conexao_Solidaria_Worker_REPO
 
 jobs:
   build-and-test:
@@ -52,6 +51,6 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ./${{ ENV.SRC_PATH }}/ConexaoSolidaria.Worker
+        context: ./ConexaoSolidaria.Worker
         push: true
         tags: ${{ steps.meta.outputs.tags }}
