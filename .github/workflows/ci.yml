@@ -1,0 +1,57 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+env:
+   SOLUTION_PATH: ConexaoSolidaria.Worker.sln
+   SRC_PATH: Conexao_Solidaria_Worker_REPO
+
+jobs:
+  build-and-test:
+    name: Build, Test and Package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ ENV.SRC_PATH }} 
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ ENV.SOLUTION_PATH }}
+
+    - name: Build project
+      run: dotnet build ${{ ENV.SOLUTION_PATH }} --no-restore --configuration Release
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/conexao-solidaria-worker
+        tags: |
+          type=sha
+          type=raw,value=latest
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./${{ ENV.SRC_PATH }}/ConexaoSolidaria.Worker
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
