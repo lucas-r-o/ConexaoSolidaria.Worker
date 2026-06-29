@@ -12,9 +12,6 @@ jobs:
   build-and-test:
     name: Build, Test and Package
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ ENV.SRC_PATH }} 
 
     steps:
     - name: Checkout repository
