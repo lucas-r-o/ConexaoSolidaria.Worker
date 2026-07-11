@@ -6,61 +6,122 @@ Serviço de background desenvolvido em C#/.NET para o Hackathon Conexão Solidá
 * .NET (C#)
 * Entity Framework Core & PostgreSQL
 * MassTransit & RabbitMQ (Mensageria assíncrona)
+* Kubernetes (Docker Desktop)
 
 ## 📌 Pré-requisitos
 * SDK do .NET instalado.
-* Docker Desktop instalado e executando (a infraestrutura é compartilhada com o repositório principal).
+* Docker Desktop instalado e executando, com o Kubernetes habilitado (a infraestrutura é compartilhada com o repositório principal).
+* `kubectl` configurado apontando para o cluster local do Docker Desktop.
 
 ---
 
 ## 🚀 Como Rodar o Worker Localmente
 
+Existem duas formas de subir o ambiente: via **Docker Compose** (mais simples, para desenvolvimento do dia a dia) ou via **Kubernetes** (ambiente que replica a arquitetura final do projeto). Escolha uma delas e configure o `Host` de acordo com a tabela abaixo.
+
 ### Passo 1: Iniciar a Infraestrutura Compartilhada
-A infraestrutura (banco PostgreSQL e o broker RabbitMQ) é centralizada no Docker Compose do repositório da **API Principal** (repositório `application`).
 
-1. Acesse o repositório da **API Principal** e certifique-se de que a infraestrutura está ativa executando:
-   ```bash
-   docker compose up -d
-   ```
-   *(Caso não tenha feito isso antes, consulte o README do repositório principal para criar o arquivo `.env` necessário para o banco de dados).*
+A infraestrutura (banco PostgreSQL e o broker RabbitMQ) é centralizada no repositório da **API Principal** (repositório `application`).
 
-### Passo 2: Configurar as Variáveis de Ambiente e Segredos (Secrets)
-Para que o Worker se conecte ao banco de dados e ao RabbitMQ locais criados pela API principal, utilize o .NET Secret Manager.
+**Opção A — Docker Compose:**
+```bash
+docker compose up -d
+```
+*(Caso não tenha feito isso antes, consulte o README do repositório principal para criar o arquivo `.env` necessário para o banco de dados).*
 
-1. Abra o terminal na pasta deste projeto (onde fica o arquivo `ConexaoSolidaria.Worker.sln`) e navegue até a pasta interna do projeto:
-   ```bash
-   cd ConexaoSolidaria.Worker
-   ```
-2. Inicialize o Secret Manager:
-   ```bash
-   dotnet user-secrets init
-   ```
-3. Configure os segredos de conexão local (lembre-se de usar a mesma senha de banco configurada no seu `.env` da infraestrutura):
-   ```bash
-   dotnet user-secrets set "ConnectionStrings:Worker" "Host=localhost;Port=5432;Database=conexaosolidaria;Username=postgres;Password=sua_senha_aqui"
-   dotnet user-secrets set "Bus:Host" "localhost"
-   dotnet user-secrets set "Bus:Port" "5672"
-   dotnet user-secrets set "Bus:User" "guest"
-   dotnet user-secrets set "Bus:Password" "guest"
-   ```
+**Opção B — Kubernetes:** veja a seção [Executando via Kubernetes](#-executando-via-kubernetes) mais abaixo.
+
+### Passo 2: Configurar as Variáveis de Ambiente
+
+As configurações de conexão são feitas via `appsettings.json`.
+
+1. Para rodar localmente va na pasta `ConexaoSolidaria.Worker`, crie (ou edite) o arquivo `appsettings.Development.json` com o seguinte conteúdo:
+
+```json
+{
+  "ConnectionStrings": {
+    "Worker": "Host=;Port=;Database=conexaosolidaria;Username=postgres;Password=sua_senha_aqui"
+  },
+  "Bus": {
+    "Host": "localhost",
+    "Port": "5672",
+    "User": "guest",
+    "Password": "guest"
+  }
+}
+```
+
+2. **Atenção ao valor de `Bus:Host`**, ele muda dependendo de como você subiu a infraestrutura:
+
+| Ambiente | Valor de `Bus:Host` |
+|---|---|
+| Docker Compose | `localhost` |
+| Kubernetes (Docker Desktop) | `host.docker.internal` |
+
+3. Localmente, a porta do RabbitMQ é sempre `5672`, com usuário e senha `guest`.
 
 ### Passo 3: Aplicar as Migrações de Banco do Worker
+
 Este Worker possui tabelas próprias (como a tabela de controle consolidado `ArrecadacaoCampanha`). Aplique as migrations no banco de dados compartilhado executando:
 ```bash
 dotnet ef database update
 ```
 
 ### Passo 4: Executar o Worker
-Com a infraestrutura activa e os segredos devidamente configurados, execute o comando para iniciar o processamento:
+
+Com a infraestrutura ativa e o `appsettings.Development.json` devidamente configurado, execute:
 ```bash
 dotnet run
 ```
 
 ---
 
+## ☸️ Executando via Kubernetes
+
+O projeto também pode ser executado inteiramente dentro do cluster Kubernetes local (Docker Desktop).
+
+### Passo 1: Gerar a imagem Docker do Worker
+
+Antes de aplicar os manifests, é necessário buildar a imagem localmente com o nome e tag esperados pelo deployment:
+
+```bash
+docker build -t conexao-solidaria-worker:latest .
+```
+
+> ⚠️ O nome da imagem precisa ser exatamente `conexao-solidaria-worker:latest`, pois é essa referência que os manifests do Kubernetes utilizam. Sem isso, o pod não sobe corretamente.
+
+### Passo 2: Aplicar os manifests do Kubernetes
+
+Acesse a pasta com o Dockerfile do Worker:
+```bash
+cd ConexaoSolidaria.Worker/k8s
+```
+
+Primeiro, crie o namespace:
+```bash
+kubectl apply -f namespace.yaml
+```
+
+Depois, aplique o restante dos manifests (Deployments, Services, ConfigMaps):
+```bash
+kubectl apply -f .
+```
+
+### Passo 3: Verificar se o pod subiu corretamente
+
+```bash
+kubectl get pods -n apps
+```
+
+O pod do Worker deve aparecer com status `Running`.
+
+> 💡 Lembre-se: como o cluster é local (Docker Desktop), o Worker rodando dentro de um pod precisa se conectar ao RabbitMQ e ao Postgres usando `host.docker.internal` como Host, e não `localhost` — conforme indicado na tabela do Passo 2.
+
+---
+
 ## 🧪 Validando a Integração (Fluxo Ponta a Ponta)
 
-Com a **API Principal** e o **Worker** rodando ao mesmo tempo:
+Com a **API Principal** e o **Worker** rodando ao mesmo tempo (via Compose ou Kubernetes):
 
 1. No repositório da **API Principal**, utilize o arquivo `ConexaoSolidaria.API.http` para realizar os testes:
    - Cadastre uma ONG e faça login para obter o Token.
@@ -68,4 +129,4 @@ Com a **API Principal** e o **Worker** rodando ao mesmo tempo:
    - Cadastre um Doador e faça login para obter o Token.
    - Envie uma requisição de **Simular Doação** (`POST /doacoes`) informando o `ID` da campanha criada e o valor desejado.
 2. A API publicará o evento `DoacaoRecebida` na fila do RabbitMQ.
-3. No terminal deste **Worker**, você verá a mensagem sendo recebida pelo Consumer `DoacaoRecebidaConsumer` e a base de dados sendo atualizada com sucesso.
+3. No terminal deste **Worker** (ou nos logs do pod, se estiver via Kubernetes), você verá a mensagem sendo recebida pelo Consumer `DoacaoRecebidaConsumer` e a base de dados sendo atualizada com sucesso.
