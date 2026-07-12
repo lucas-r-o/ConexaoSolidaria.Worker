@@ -119,14 +119,13 @@ O pod do Worker deve aparecer com status `Running`.
 
 ---
 
-## 🧪 Validando a Integração (Fluxo Ponta a Ponta)
+## 🔄 CI/CD
 
-Com a **API Principal** e o **Worker** rodando ao mesmo tempo (via Compose ou Kubernetes):
+O pipeline está em `.github/workflows/ci.yml` e é executado automaticamente a cada **Pull Request com destino à branch `main`**, ou manualmente via `workflow_dispatch`. Ele realiza, nesta ordem:
 
-1. No repositório da **API Principal**, utilize o arquivo `ConexaoSolidaria.API.http` para realizar os testes:
-   - Cadastre uma ONG e faça login para obter o Token.
-   - Crie uma nova Campanha de doações (copie o `ID` retornado).
-   - Cadastre um Doador e faça login para obter o Token.
-   - Envie uma requisição de **Simular Doação** (`POST /doacoes`) informando o `ID` da campanha criada e o valor desejado.
-2. A API publicará o evento `DoacaoRecebida` na fila do RabbitMQ.
-3. No terminal deste **Worker** (ou nos logs do pod, se estiver via Kubernetes), você verá a mensagem sendo recebida pelo Consumer `DoacaoRecebidaConsumer` e a base de dados sendo atualizada com sucesso.
+1. Restore e build da solution `ConexaoSolidaria.Worker.sln` (.NET 10, configuração Release).
+2. Build e push da imagem Docker do Worker (`conexao-solidaria-worker`) para o Docker Hub, com as tags `latest` e o SHA do commit.
+
+> ⚠️ **Atenção:** este pipeline dispara em **Pull Request**, não em push direto na `main`. O edital do hackathon exige um pipeline acionado a cada push na branch principal — vale revisar se esse comportamento atende ao requisito antes da entrega final, ou ajustar o trigger para incluir `push: branches: [main]`.
+
+---
