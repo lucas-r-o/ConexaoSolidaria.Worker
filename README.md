@@ -126,6 +126,4 @@ O pipeline está em `.github/workflows/ci.yml` e é executado automaticamente a 
 1. Restore e build da solution `ConexaoSolidaria.Worker.sln` (.NET 10, configuração Release).
 2. Build e push da imagem Docker do Worker (`conexao-solidaria-worker`) para o Docker Hub, com as tags `latest` e o SHA do commit.
 
-> ⚠️ **Atenção:** este pipeline dispara em **Pull Request**, não em push direto na `main`. O edital do hackathon exige um pipeline acionado a cada push na branch principal — vale revisar se esse comportamento atende ao requisito antes da entrega final, ou ajustar o trigger para incluir `push: branches: [main]`.
-
 ---
