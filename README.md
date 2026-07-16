@@ -21,19 +21,13 @@ Existem duas formas de subir o ambiente: via **Docker Compose** (mais simples, p
 
 ### Passo 1: Iniciar a Infraestrutura Compartilhada
 
-A infraestrutura (banco PostgreSQL e o broker RabbitMQ) é centralizada no repositório da **API Principal** (repositório `application`).
+Executar o docker compose para subir o rabbitMQ:
 
-**Opção A — Docker Compose:**
 ```bash
 docker compose up -d
 ```
-*(Caso não tenha feito isso antes, consulte o README do repositório principal para criar o arquivo `.env` necessário para o banco de dados).*
-
-**Opção B — Kubernetes:** veja a seção [Executando via Kubernetes](#-executando-via-kubernetes) mais abaixo.
 
 ### Passo 2: Configurar as Variáveis de Ambiente
-
-As configurações de conexão são feitas via `appsettings.json`.
 
 1. Para rodar localmente va na pasta `ConexaoSolidaria.Worker`, crie (ou edite) o arquivo `appsettings.Development.json` com o seguinte conteúdo:
 
@@ -55,7 +49,6 @@ As configurações de conexão são feitas via `appsettings.json`.
 
 | Ambiente | Valor de `Bus:Host` |
 |---|---|
-| Docker Compose | `localhost` |
 | Kubernetes (Docker Desktop) | `host.docker.internal` |
 
 3. Localmente, a porta do RabbitMQ é sempre `5672`, com usuário e senha `guest`.
