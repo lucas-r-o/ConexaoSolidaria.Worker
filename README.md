@@ -85,6 +85,21 @@ docker build -t conexao-solidaria-worker:latest .
 
 ### Passo 2: Aplicar os manifests do Kubernetes
 
+O arquivo `k8s/secrets.yaml` é versionado apenas como template, com os campos sensíveis em branco:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: conexao-solidaria-worker-secrets
+  namespace: apps
+type: Opaque
+stringData:
+  ConnectionStrings__Worker: ""
+  Bus__Password: ""
+
+```
+
 Acesse a pasta com o Dockerfile do Worker:
 ```bash
 cd ConexaoSolidaria.Worker/k8s
