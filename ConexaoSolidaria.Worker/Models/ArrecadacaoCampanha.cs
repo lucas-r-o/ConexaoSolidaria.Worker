@@ -6,7 +6,7 @@
         public Guid CampanhaId { get; set; }
         public decimal TotalArrecadado { get; private set; }
         public decimal MetaFinanceira { get; set; }
-        public decimal UltimoTotalPublicado { get; set; }
+        public decimal UltimoTotalPublicado { get; private set; }
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public Status Status { get; set; } = Status.Ativo;
