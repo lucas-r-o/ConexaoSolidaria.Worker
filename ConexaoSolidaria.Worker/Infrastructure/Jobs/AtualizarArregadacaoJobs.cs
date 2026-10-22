@@ -26,9 +26,9 @@ namespace ConexaoSolidaria.Worker.Infrastructure.Jobs
                 foreach (var campanha in conquistadas)
                     campanha.Finish();
 
-                var alteradas = campanhas.Where(c => c.HouveMudanca);
+                var alteradas = campanhas.Where(c => c.HouveMudanca).ToList();
 
-                if (!alteradas.Any()) continue;
+                if (alteradas.Count == 0) continue;
 
                 foreach (var campanha in alteradas)
                     campanha.UpdateUltimoTotal();
