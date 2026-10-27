@@ -1,40 +1,79 @@
-# Conexão Solidária — Worker de Processamento de Doações
+﻿# Conexão Solidária Worker
 
-Serviço de background desenvolvido em C#/.NET para o Hackathon Conexão Solidária. Este Worker é responsável por consumir de forma assíncrona os eventos de doação recebidos em uma fila do RabbitMQ, computar os valores e atualizar o progresso financeiro das campanhas diretamente no banco de dados.
+Background service built in C#/.NET to process donation events from the Conexão Solidária ecosystem. This worker listens to RabbitMQ messages, updates campaign fundraising totals, persists the data in PostgreSQL, and emits result events for downstream consumers.
 
-## 🛠️ Tecnologias Utilizadas
-* .NET (C#)
-* Entity Framework Core & PostgreSQL
-* MassTransit & RabbitMQ (Mensageria assíncrona)
-* Kubernetes (Docker Desktop)
+## Overview
 
-## 📌 Pré-requisitos
-* SDK do .NET instalado.
-* Docker Desktop instalado e executando, com o Kubernetes habilitado (a infraestrutura é compartilhada com o repositório principal).
-* `kubectl` configurado apontando para o cluster local do Docker Desktop.
+The Worker is responsible for handling donation events asynchronously, ensuring that each campaign's total amount is updated without blocking the main application flow. It consumes a donation queue, validates the campaign state, updates the aggregate value, and publishes the outcome of the operation.
 
----
+## Technologies Used
 
-## 🚀 Como Rodar o Worker Localmente
+- .NET 10 / C#
+- ASP.NET Core
+- Entity Framework Core
+- PostgreSQL
+- MassTransit
+- RabbitMQ
+- Docker / Docker Compose
+- Kubernetes (Docker Desktop local cluster)
+- Prometheus metrics integration
 
-Existem duas formas de subir o ambiente: via **Docker Compose** (mais simples, para desenvolvimento do dia a dia) ou via **Kubernetes** (ambiente que replica a arquitetura final do projeto). Escolha uma delas e configure o `Host` de acordo com a tabela abaixo.
+## Prerequisites
 
-### Passo 1: Iniciar a Infraestrutura Compartilhada
+Before running the project, make sure you have:
 
-Executar o docker compose para subir o rabbitMQ:
+- .NET SDK installed
+- Docker Desktop running
+- Kubernetes enabled in Docker Desktop (when using the Kubernetes deployment)
+- `kubectl` configured to the local Docker Desktop cluster
+- Access to the shared PostgreSQL instance used by the project
+
+## Project Structure
+
+```text
+ConexaoSolidaria.Worker/
+├── ConexaoSolidaria.Worker/        # Main project
+│   ├── Events/                     # Message contracts
+│   ├── Infrastructure/             # Consumers, jobs, persistence, extensions
+│   ├── Models/                     # Domain models
+│   ├── Migrations/                 # EF Core migrations
+│   ├── k8s/                        # Kubernetes manifests
+│   ├── Program.cs                  # Startup configuration
+│   ├── appsettings.json            # Base configuration
+│   ├── appsettings.Development.json # Local environment settings
+│   ├── docker-compose.yml          # RabbitMQ local infrastructure
+│   └── ConexaoSolidaria.Worker.csproj
+├── .github/workflows/ci.yml        # CI/CD pipeline
+├── README.md
+├── ConexaoSolidaria.Worker.sln
+└── .gitignore
+```
+
+## Local Execution
+
+There are two common ways to run the environment:
+
+- Local development via Docker Compose and direct `dotnet run`
+- Kubernetes deployment for the final architecture replicated locally
+
+### 1) Start Shared Infrastructure
+
+Start RabbitMQ locally with Docker Compose:
 
 ```bash
 docker compose up -d
 ```
 
-### Passo 2: Configurar as Variáveis de Ambiente
+This will start the RabbitMQ broker used by the worker.
 
-1. Para rodar localmente va na pasta `ConexaoSolidaria.Worker`, crie (ou edite) o arquivo `appsettings.Development.json` com o seguinte conteúdo:
+### 2) Configure Local Settings
+
+From the project folder, create or edit `appsettings.Development.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "Worker": "Host=;Port=;Database=conexaosolidaria;Username=postgres;Password=sua_senha_aqui"
+    "Worker": "Host=localhost;Port=5432;Database=conexaosolidaria;Username=postgres;Password=your_password"
   },
   "Bus": {
     "Host": "localhost",
@@ -45,93 +84,104 @@ docker compose up -d
 }
 ```
 
-2. **Atenção ao valor de `Bus:Host`**, ele muda dependendo de como você subiu a infraestrutura:
+Important notes:
 
-| Ambiente | Valor de `Bus:Host` |
-|---|---|
-| Kubernetes (Docker Desktop) | `host.docker.internal` |
+- If you are running the infrastructure locally with Docker Compose, set `Bus:Host` to `localhost`.
+- If the worker is running inside a Kubernetes pod in Docker Desktop, use `host.docker.internal` instead of `localhost`.
+- RabbitMQ default credentials are `guest / guest`.
 
-3. Localmente, a porta do RabbitMQ é sempre `5672`, com usuário e senha `guest`.
+### 3) Apply Database Migrations
 
-### Passo 3: Aplicar as Migrações de Banco do Worker
+The worker keeps its own database table set, including the `ArrecadacaoCampanha` aggregate table. Apply the migrations to the shared database:
 
-Este Worker possui tabelas próprias (como a tabela de controle consolidado `ArrecadacaoCampanha`). Aplique as migrations no banco de dados compartilhado executando:
 ```bash
 dotnet ef database update
 ```
 
-### Passo 4: Executar o Worker
+If the .NET Entity Framework CLI is not available, install it first:
 
-Com a infraestrutura ativa e o `appsettings.Development.json` devidamente configurado, execute:
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+### 4) Run the Worker
+
 ```bash
 dotnet run
 ```
 
----
+The service will start using the project launch settings, which expose the app on the local URL configured in `Properties/launchSettings.json` (for example `http://localhost:5001`).
 
-## ☸️ Executando via Kubernetes
+### 5) Validate Health and Metrics
 
-O projeto também pode ser executado inteiramente dentro do cluster Kubernetes local (Docker Desktop).
+The worker exposes a health endpoint and Prometheus metrics:
 
-### Passo 1: Gerar a imagem Docker do Worker
+```bash
+curl http://localhost:5001/health
+curl http://localhost:5001/metrics
+```
 
-Antes de aplicar os manifests, é necessário buildar a imagem localmente com o nome e tag esperados pelo deployment:
+## Kubernetes Deployment
+
+The project can also be executed fully inside a local Kubernetes cluster using Docker Desktop.
+
+### 1) Build the Docker Image
+
+Build the image with the exact tag expected by the manifests:
 
 ```bash
 docker build -t conexao-solidaria-worker:latest .
 ```
 
-> ⚠️ O nome da imagem precisa ser exatamente `conexao-solidaria-worker:latest`, pois é essa referência que os manifests do Kubernetes utilizam. Sem isso, o pod não sobe corretamente.
+> The image name must be exactly `conexao-solidaria-worker:latest`, because the Kubernetes manifests reference that tag.
 
-### Passo 2: Aplicar os manifests do Kubernetes
+### 2) Apply the Kubernetes Manifests
 
-O arquivo `k8s/secrets.yaml` é versionado apenas como template, com os campos sensíveis em branco:
+The `k8s/secrets.yaml` file is versioned as a template and contains blank sensitive values. Fill it in before using it in a non-local environment.
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: conexao-solidaria-worker-secrets
-  namespace: apps
-type: Opaque
-stringData:
-  ConnectionStrings__Worker: ""
-  Bus__Password: ""
+From the project directory:
 
-```
-
-Acesse a pasta com o Dockerfile do Worker:
 ```bash
-cd ConexaoSolidaria.Worker/k8s
-```
-
-Primeiro, crie o namespace:
-```bash
+cd k8s
 kubectl apply -f namespace.yaml
-```
-
-Depois, aplique o restante dos manifests (Deployments, Services, ConfigMaps):
-```bash
 kubectl apply -f .
 ```
 
-### Passo 3: Verificar se o pod subiu corretamente
+### 3) Check Pod Status
 
 ```bash
 kubectl get pods -n apps
 ```
 
-O pod do Worker deve aparecer com status `Running`.
+The worker pod should appear in a `Running` state.
 
-> 💡 Lembre-se: como o cluster é local (Docker Desktop), o Worker rodando dentro de um pod precisa se conectar ao RabbitMQ e ao Postgres usando `host.docker.internal` como Host, e não `localhost` — conforme indicado na tabela do Passo 2.
+> Inside the Kubernetes cluster, the worker must connect to RabbitMQ and PostgreSQL using `host.docker.internal` instead of `localhost`.
+
+## CI/CD
+
+The pipeline is defined in `.github/workflows/ci.yml` and runs automatically on every pull request targeting the `main` branch or can be triggered manually via `workflow_dispatch`.
+
+The workflow performs the following steps:
+
+1. Restore dependencies for `ConexaoSolidaria.Worker.sln`
+2. Build the solution in Release mode
+3. Log in to Docker Hub
+4. Build the worker image
+5. Push the image with the `latest` tag and the current commit SHA
+
+## Notes
+
+- `Bus` configuration is loaded from `appsettings.Development.json` or environment variables in Kubernetes.
+- The worker is designed to be resilient and decoupled from user-facing services, processing asynchronous donation events in the background.
+- The project is intended to run alongside the main Conexão Solidária application, sharing infrastructure such as RabbitMQ and PostgreSQL.
+
+## Troubleshooting
+
+- If the worker cannot connect to RabbitMQ, confirm the `Bus:Host`, `Port`, `User`, and `Password` values.
+- If migrations fail, verify that the PostgreSQL connection string is valid and the database is reachable.
+- If the Kubernetes pod does not start, confirm that the image was built with the exact tag `conexao-solidaria-worker:latest`.
+- If the service is unhealthy, check the application logs and ensure the database and message broker are running.
 
 ---
 
-## 🔄 CI/CD
-
-O pipeline está em `.github/workflows/ci.yml` e é executado automaticamente a cada **Pull Request com destino à branch `main`**, ou manualmente via `workflow_dispatch`. Ele realiza, nesta ordem:
-
-1. Restore e build da solution `ConexaoSolidaria.Worker.sln` (.NET 10, configuração Release).
-2. Build e push da imagem Docker do Worker (`conexao-solidaria-worker`) para o Docker Hub, com as tags `latest` e o SHA do commit.
-
----
+This README reflects the current implementation and expected local and Kubernetes execution flows for the project.
